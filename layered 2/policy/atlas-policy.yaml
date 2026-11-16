@@ -1,0 +1,178 @@
+# ATLAS POLICY PACK
+# Every number and every piece of governed wording lives here, and only here.
+# Tools read it. Skills never contain these values. A change is a new version of this file,
+# approved by the owner of the section, with the impact report attached (python -m atlas.impact).
+version: "2026.11.0"
+effective: "2026-11-02"
+status: illustrative        # values are the prototype's; not approved firm policy
+
+owners:
+  opportunities: cio-office
+  heat: product
+  eligibility: advisory-program-office
+  strategies: cio-office
+  strategies.catalog: product-specialists
+  transition: advisory-program-office
+  disclosures: compliance
+
+# ---------------------------------------------------------------- 1. opportunity criteria
+opportunities:
+  downgrades:
+    lookback_days: 90           # applied upstream by the positions service when it builds facts
+  maturing:
+    horizon_months: 12          # default; the advisor can change it on screen
+    min_amount: 250000          # default; the advisor can change it on screen
+    urgent_within_days: 60
+    urgent_step: 4
+  concentration:
+    threshold: 0.10
+    min_step: 3
+  cash:
+    over_target: 0.05
+    min_excess: 250000
+  drift:
+    max_group_drift: 0.05
+  behind:
+    gap_pts: 1.5
+    severe_gap_pts: -4.0
+    severe_step: 5
+    wide_gap_pts: -3.0
+    wide_step: 4
+    base_step: 3
+  harvest:
+    min_losses: 250000
+  gains:
+    min_share: 0.20
+  basis:
+    min_step: 2
+  meetings:
+    within_days: 14
+    imminent_days: 3
+    imminent_step: 5
+    soon_days: 7
+    soon_step: 4
+    base_step: 3
+  cio:
+    flag_when: [High]
+    step: 3
+  programs:
+    min_eligible: 5
+    many_eligible: 7
+    many_step: 3
+    base_step: 2
+  advisory:
+    min_brokerage: 250000
+    commission_ratio: 0.004
+    reasons: [drift, concentration, cash, downgrades, harvest]   # other criteria that count as a reason for ongoing advice
+    min_step: 3
+
+heat:
+  household_share_steps: [0.01, 0.03, 0.06, 0.10]   # <=1% -> 1 ... >10% -> 5
+  book_share_steps: [0.15, 0.30, 0.45, 0.60]
+
+# ---------------------------------------------------------------- 2. program eligibility
+eligibility:
+  specialist_review_above: 0.50
+  condition_owners:
+    specialist: Concentrated stock specialist
+    missing_basis: Operations
+    insider: Compliance
+    excluded_assets: Advisor
+
+# ---------------------------------------------------------------- 5. program strategy ranking
+strategies:
+  default: cio
+  suggestions: 3
+  weights:      {overlap: 0.40, fit: 0.45, tax_now: 0.15}
+  fit_weights:  {tracking_error: 0.45, sector_gap: 0.30, top_stock: 0.25}
+  fit_floors:   {tracking_error: 0.002, sector_gap: 0.01, top_stock: 0.01}
+  top_stock_counts_above: 0.10
+  tax_scale_share: 0.01           # tax now is scaled against this share of household value
+  same_as_default_tolerance: 1000 # dollars
+  # Availability rules are DATA: a product specialist can add or change a requirement that
+  # uses an existing rule type without a code release. A new rule type needs a tool change.
+  catalog:
+    - {id: cio,        name: CIO model portfolio,                          type: CIO model,       manager_fee_bp: 10}
+    - id: cio-tax
+      name: "CIO model, tax-aware"
+      type: CIO model
+      manager_fee_bp: 12
+      requires: [{rule: taxable_only, reason: taxable accounts only}]
+    - {id: cio-income, name: CIO income model,                             type: CIO model,       manager_fee_bp: 25}
+    - {id: esg,        name: Sustainable CIO model,                        type: CIO model,       manager_fee_bp: 12}
+    - id: di
+      name: "Direct indexing (US large cap) + CIO model"
+      type: Direct indexing
+      manager_fee_bp: 20
+      requires: [{rule: min_brokerage, value: 250000, reason: "needs at least $250K"}]
+      disclosures: [di_no_transition]
+    - {id: lcc,        name: US large cap core manager + CIO model,        type: Manager,         manager_fee_bp: 35}
+    - {id: lcg,        name: US large cap growth manager + CIO model,      type: Manager,         manager_fee_bp: 45}
+    - {id: intl,       name: International ADR manager + CIO model,        type: Manager,         manager_fee_bp: 40}
+    - id: muni
+      name: Municipal ladder + CIO model
+      type: Fixed income
+      manager_fee_bp: 20
+      requires: [{rule: taxable_only, reason: taxable accounts only}]
+    - {id: ust,        name: Treasury ladder + CIO model,                  type: Fixed income,    manager_fee_bp: 15}
+    - id: alts
+      name: CIO model with alternatives
+      type: Alternatives
+      manager_fee_bp: 25
+      requires: [{rule: min_household_value, value: 5000000, reason: "qualified clients ($5M+)"}]
+
+# ---------------------------------------------------------------- 6. transition (prebuilt tool; these are its guard values)
+transition:
+  budgets: [50000, 100000, 250000, 500000, 1000000]
+  default_budget: 250000
+  not_available_for_types: [Direct indexing]
+
+# ---------------------------------------------------------------- governed wording
+# Compliance owns the text. TOOLS decide when each one applies and return its id;
+# the harness checks it appears. Skills do not carry disclosure text.
+disclosures:
+  form_crs:
+    text: "Deliver Form CRS and the program brochure before proposing the program."
+    match: ["form crs"]
+    source: form-crs
+  conflict:
+    text: "Conflict to disclose: brokerage pays more when the client trades; the program pays more as assets grow."
+    match: ["conflict to disclose"]
+    source: program-brochure
+  specialist_review:
+    text: "A concentrated stock specialist reviews this household before anything moves into the program."
+    match: ["specialist reviews"]
+    source: program-brochure
+  insider_preclearance:
+    text: "Insider stock is never sold automatically; each sale needs Compliance pre-clearance."
+    match: ["pre-clearance"]
+    source: insider-policy
+  missing_basis:
+    text: "Positions without cost basis are held until Operations has the basis on file."
+    match: ["cost basis"]
+    source: conversion-rules
+  manager_fee:
+    text: "Each strategy's manager fee is charged in addition to the advisory fee."
+    match: ["in addition to the advisory fee"]
+    source: program-brochure
+  di_no_transition:
+    text: "Direct indexing is not covered by the tax-efficient transition service."
+    match: ["not covered by the tax-efficient transition"]
+    source: transition-term-sheet
+  wash_sale:
+    text: "Wash-sale rule: a security sold at a loss is not bought back within the wash-sale window; a similar fund is used instead."
+    match: ["wash-sale rule"]
+    source: tax-guide
+  indicative:
+    text: "Figures from the fee and transition tools are indicative."
+    match: ["indicative"]
+    source: program-brochure
+
+sources:
+  form-crs: "Form CRS (Client Relationship Summary)"
+  program-brochure: "Advisory program brochure (Form ADV Part 2A, Appendix 1)"
+  transition-term-sheet: "Tax-efficient transition term sheet"
+  conversion-rules: "Atlas conversion rules"
+  insider-policy: "Insider and restricted securities policy"
+  tax-guide: "Tax management services guide"
+  opportunity-criteria: "Atlas opportunity criteria (this policy pack)"

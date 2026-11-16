@@ -1,0 +1,94 @@
+# LAYER 4: HARNESS CONFIGURATION
+# What the agent may reach on each screen, and the checks every answer passes.
+# The harness knows nothing about any single opportunity's rules: disclosures arrive from
+# tools, values from the policy pack.
+
+limits:
+  max_tool_calls: 8
+
+# ---- which skills and tools are in force, by opportunity and workflow step ----
+# `default` applies to every opportunity. A named entry ADDS to it.
+screens:
+  default:
+    skills: [opportunity]
+    tools:
+      1: [opportunity_facts, document_search]
+      2: [opportunity_facts, document_search]
+      3: [opportunity_facts, document_search]
+    actions:                      # proposed to the advisor, executed by the app after confirmation
+      3: [generate_proposal]
+  advisory:
+    skills: [advisory, strategy-comparison]
+    tools:
+      1: [eligibility]
+      2: [eligibility, strategy_fit, fee_estimate, transition_schedule]
+      3: [eligibility, strategy_fit, fee_estimate]
+    actions:
+      2: [select_strategy, set_budget]
+  concentration:
+    skills: [concentration]
+  harvest:
+    skills: [harvest]
+
+# ---- answer rules (owner: compliance for wording, security for identifiers) ----
+answer_rules:
+  H-FIG:
+    what: Every dollar amount and percentage appears in a tool result from this turn.
+  H-DISCLOSE:
+    what: Every disclosure a tool returned as required appears in the answer.
+  H-CITE:
+    what: An answer that states a rule cites an approved source; required disclosures cite theirs.
+    when_mentions: ["program", "eligib", "wash-sale", "form crs", "pre-clearance", "transition"]
+  H-WORDING:
+    what: No promises and no performance claims.
+    forbidden: ["guarantee", "risk[- ]free", "cannot lose", "no downside", "will outperform",
+                "best strategy", "top[- ]performing", "beat the market"]
+  H-DRAFT:
+    what: Proposal text is labelled as a draft.
+    steps: [3]
+    text: "This is a draft for advisor review."
+    match: ["draft for advisor review"]
+  H-CONFIRM:
+    what: Changes are proposed for the advisor to confirm, never reported as done.
+    actions: [generate_proposal, set_reminder, set_budget, select_strategy]
+  H-TOKEN:
+    what: Client tokens in the answer belong to this request.
+  H-PII:
+    what: No identifier patterns in the answer.
+    patterns:
+      tax_id: '\b\d{3}-\d{2}-\d{4}\b'
+      phone: '\b\d{3}[-. ]\d{3}[-. ]\d{4}\b'
+      email: '[\w.+-]+@[\w-]+\.[\w.]+'
+      account: '\b[A-Z]{2,4}-\d{6,}\b'
+
+# Checked before a tool runs. Listed here so evals can target them by id.
+call_rules:
+  H-ENTITLE: The household is in this advisor's book.
+  H-TOOL: The tool is on the allow-list for this opportunity and step.
+  H-SCOPE: The call refers to a client token from this request.
+  H-LIMIT: The turn stays within the tool-call budget.
+
+# ---- LEAN FLOW (atlas/lean) ----------------------------------------------------------
+# The harness gathers what a screen needs before the model is called, so the usual turn is
+# one model call. The model may still call the what-if tools listed here.
+lean:
+  prefetch:                 # opportunity facts are always fetched
+    default: {1: [], 2: [], 3: []}
+    advisory:
+      1: [eligibility]
+      2: [eligibility, strategy, fee]
+      3: [eligibility, strategy, fee]
+  what_if_tools:
+    default: {2: [opportunity_what_if]}
+    advisory: {2: [transition_schedule, fee_estimate]}
+  narrative_rules:          # the only checks left on what the model writes
+    H-REF: Every reference names a field the harness supplied.
+    H-RAWFIG: The model does not type figures; it refers to fields.
+    H-WORDING: No promises and no performance claims.
+    H-PII: No identifier patterns.
+    H-TOKEN: Client tokens belong to this request.
+  by_construction:          # no check needed: the app writes these, not the model
+    H-DISCLOSE: Disclosures are appended from tool results in the pack's wording.
+    H-CITE: Citations are attached from the disclosures' sources.
+    H-DRAFT: The draft label is appended on the proposal step.
+    H-CONFIRM: Actions are built by the app as confirm-first buttons from an allowed list.

@@ -1,0 +1,88 @@
+# Control bands for Ask Atlas. A breach opens a new intent.md in docs/intent/ that states
+# what was breached, why it matters and the constraint for the fix.
+# Values marked assumed are starting points to confirm with the named owner.
+
+bands:
+  - id: calc-parity
+    measure: Golden parity test failures on main
+    band: "== 0"
+    source: CI
+    owner: Tech lead
+    on_breach: block release
+
+  - id: pii-leak
+    measure: Planted identifiers found in any model payload (leak test, every household)
+    band: "== 0"
+    source: CI and nightly eval
+    owner: Security lead
+    on_breach: block release; disable chat mode in production
+
+  - id: pii-detector-structured
+    measure: Recall on structured identifiers (tax ID, phone, email, account number)
+    band: "== 100%"
+    source: CI (evals/pii)
+    owner: Security lead
+    on_breach: block release
+
+  - id: pii-detector-names
+    measure: Recall on person and client names in free text
+    band: ">= 98%"          # assumed; the prototype's pattern detector misses nicknames
+    source: CI (evals/pii)
+    owner: Security lead
+    on_breach: block release of chat mode
+
+  - id: answer-figures-from-tools
+    measure: Share of figures in chat answers that match a tool result in the same trace
+    band: "== 100%"
+    source: Nightly eval over sampled traces
+    owner: Tech lead
+    on_breach: new intent; chat answers fall back to tool output only
+
+  - id: citation-coverage
+    measure: Share of program-rule or CIO statements carrying a citation to a current document
+    band: ">= 99%"          # assumed
+    source: Nightly eval
+    owner: Product lead
+    on_breach: new intent
+
+  - id: entitlement-bypass
+    measure: Requests returning household data without an entitlements decision in the trace
+    band: "== 0"
+    source: Trace audit, daily
+    owner: Security lead
+    on_breach: incident
+
+  - id: action-latency
+    measure: Action-mode p95 latency at the agent gateway
+    band: "<= 800 ms"       # assumed
+    source: Monitoring
+    owner: Platform lead
+    on_breach: new intent after 3 consecutive business days
+
+  - id: chat-first-token
+    measure: Chat time to first streamed token, p95
+    band: "<= 3 s"          # assumed
+    source: Monitoring
+    owner: Platform lead
+    on_breach: new intent
+
+  - id: nightly-publish
+    measure: Nightly runs that fail sample checks and leave yesterday's snapshot live
+    band: "<= 1 per 30 days" # assumed
+    source: Batch monitoring
+    owner: Data lead
+    on_breach: new intent
+
+  - id: unconfirmed-write
+    measure: Writes to client-facing artifacts without a recorded advisor confirmation
+    band: "== 0"
+    source: Operational store audit
+    owner: Compliance partner
+    on_breach: incident
+
+  - id: human-review-critical
+    measure: Merged PRs touching atlas_tools/, the PII guard, entitlements or the action catalog without a human approval
+    band: "== 0"
+    source: Repository audit
+    owner: Tech lead
+    on_breach: revert and review

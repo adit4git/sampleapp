@@ -1,0 +1,15 @@
+[project]
+name = "atlas-tools"
+version = "0.0.1"
+description = "Deterministic tools behind the Ask Atlas agent"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "evals"]
+pythonpath = ["services/tools"]
+
+[tool.ruff]
+line-length = 100

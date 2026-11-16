@@ -1,0 +1,13 @@
+{"text": "Call Margaret Henderson at (555) 555-0142 about the gift", "expected": ["Person name", "Phone"]}
+{"text": "Her SSN is 912-34-5678, please update the file", "expected": ["SSN or tax ID"]}
+{"text": "Send the proposal to owen.whitaker@example.com", "expected": ["Email"]}
+{"text": "Move account 4X1-48213 into the CIO model", "expected": ["Account number"]}
+{"text": "Paul was born 1958-04-12, check the RMD", "expected": ["Person name", "Date of birth"]}
+{"text": "They moved to 418 Linden Lane last spring", "expected": ["Street address"]}
+{"text": "How risky is Kaplan right now?", "expected": ["Client name"]}
+{"text": "What is the tax on the Lund Family transition at $250K?", "expected": ["Client name"]}
+{"text": "Is a $500K budget too high for this client?", "expected": []}
+{"text": "Compare AAPL and MSFT exposure across the book", "expected": []}
+{"text": "Call Maggie about the trust before Friday", "expected": ["Person name"]}
+{"text": "his social is nine one two three four five six seven eight", "expected": ["SSN or tax ID"]}
+{"text": "Email from Jordan Blake (new prospect) about the referral", "expected": ["Person name"]}
